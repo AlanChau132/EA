@@ -1,10 +1,12 @@
-from datetime import datetime
+
+from datetime import datetime, timedelta, timezone
 from hashlib import md5
-from time import time
-from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
 from app import app, db, login
+import jwt
+
+from flask_login import UserMixin
+
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 followers = db.Table(
@@ -28,8 +30,8 @@ class User(UserMixin, db.Model):
         secondaryjoin=(followers.c.followed_id == id),
         backref=db.backref('followers', lazy='dynamic'), lazy='dynamic')
 
-    def __repr__(self):
-        return '<User {}>'.format(self.username)
+    def __repr__(self) -> str:
+        return f'<User {self.username}>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -38,7 +40,7 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def avatar(self, size):
-        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
+        digest = md5(self.email.lower().encode("utf-8")).hexdigest()
         return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(
             digest, size)
 
@@ -51,28 +53,27 @@ class User(UserMixin, db.Model):
             self.followed.remove(user)
 
     def is_following(self, user):
-        return self.followed.filter(
-            followers.c.followed_id == user.id).count() > 0
+        return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def followed_posts(self):
         followed = Post.query.join(
-            followers, (followers.c.followed_id == Post.user_id)).filter(
-            followers.c.follower_id == self.id)
+            followers, followers.c.followed_id == Post.user_id
+        ).filter(followers.c.follower_id == self.id)
         own = Post.query.filter_by(user_id=self.id)
         return followed.union(own).order_by(Post.timestamp.desc())
 
     def get_reset_password_token(self, expires_in=600):
-        return jwt.encode(
-            {'reset_password': self.id, 'exp': time() + expires_in},
-            app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
+        return jwt.encode({"reset_password": self.id,
+                           "exp": datetime.now(tz=timezone.utc) + timedelta(seconds=expires_in)},
+                          app.config["SECRET_KEY"], algorithm="HS256")
 
     @staticmethod
     def verify_reset_password_token(token):
         try:
-            id = jwt.decode(token, app.config['SECRET_KEY'],
-                            algorithms=['HS256'])['reset_password']
-        except:
-            return
+            id = jwt.decode(token, app.config["SECRET_KEY"], algorithms="HS256")[
+                "reset_password"]
+        except:           
+            return None
         return User.query.get(id)
 
 
@@ -87,5 +88,23 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+    def __repr__(self) -> str:
+        return f'<Post {self.body}>'
+    
+class Picture(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(128), nullable=False)
+    description = db.Column(db.String(256), nullable=True)
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
+
     def __repr__(self):
-        return '<Post {}>'.format(self.body)
+        return f'<Picture {self.filename}>'
+
+class News(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128), nullable=False)
+    content = db.Column(db.String(1024), nullable=True)
+    pictures = db.relationship('Picture', backref='news', lazy='dynamic') 
+
+    def __repr__(self):
+        return f'<News {self.title}>'

@@ -6,8 +6,9 @@ from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
     ResetPasswordRequestForm, ResetPasswordForm
-from app.models import User, Post
+from app.models import User, Post ,News, Picture
 from app.email import send_password_reset_email
+
 
 
 @app.before_request
@@ -31,14 +32,17 @@ def index():
         return redirect(url_for('index'))
     page = request.args.get('page', 1, type=int)
     posts = current_user.followed_posts().paginate(
-        page, app.config['POSTS_PER_PAGE'], False)
-    next_url = url_for('index', page=posts.next_num) \
-        if posts.has_next else None
-    prev_url = url_for('index', page=posts.prev_num) \
-        if posts.has_prev else None
-    return render_template('index.html', title=_('Home'), form=form,
+        page=page, per_page=app.config["POSTS_PER_PAGE"], error_out=False)
+    news = News.query.all()
+    pictures = Picture.query.all()
+    picture_paths = [picture.filename for picture in pictures]
+    next_url = url_for(
+        'index', page=posts.next_num) if posts.next_num else None
+    prev_url = url_for(
+        'index', page=posts.prev_num) if posts.prev_num else None
+    return render_template('index.html.j2', title=_('Home'), form=form,
                            posts=posts.items, next_url=next_url,
-                           prev_url=prev_url)
+                           prev_url=prev_url,news=news, pictures=pictures, picture_paths=picture_paths)
 
 
 @app.route('/explore')
@@ -46,12 +50,12 @@ def index():
 def explore():
     page = request.args.get('page', 1, type=int)
     posts = Post.query.order_by(Post.timestamp.desc()).paginate(
-        page, app.config['POSTS_PER_PAGE'], False)
-    next_url = url_for('explore', page=posts.next_num) \
-        if posts.has_next else None
-    prev_url = url_for('explore', page=posts.prev_num) \
-        if posts.has_prev else None
-    return render_template('index.html', title=_('Explore'),
+        page=page, per_page=app.config["POSTS_PER_PAGE"], error_out=False)
+    next_url = url_for(
+        'explore', page=posts.next_num) if posts.next_num else None
+    prev_url = url_for(
+        'explore', page=posts.prev_num) if posts.prev_num else None
+    return render_template('index.html.j2', title=_('Explore'),
                            posts=posts.items, next_url=next_url,
                            prev_url=prev_url)
 
@@ -71,7 +75,7 @@ def login():
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
-    return render_template('login.html', title=_('Sign In'), form=form)
+    return render_template('login.html.j2', title=_('Sign In'), form=form)
 
 
 @app.route('/logout')
@@ -92,7 +96,7 @@ def register():
         db.session.commit()
         flash(_('Congratulations, you are now a registered user!'))
         return redirect(url_for('login'))
-    return render_template('register.html', title=_('Register'), form=form)
+    return render_template('register.html.j2', title=_('Register'), form=form)
 
 
 @app.route('/reset_password_request', methods=['GET', 'POST'])
@@ -107,7 +111,7 @@ def reset_password_request():
         flash(
             _('Check your email for the instructions to reset your password'))
         return redirect(url_for('login'))
-    return render_template('reset_password_request.html',
+    return render_template('reset_password_request.html.j2',
                            title=_('Reset Password'), form=form)
 
 
@@ -116,7 +120,7 @@ def reset_password(token):
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     user = User.verify_reset_password_token(token)
-    if not user:
+    if user is None:
         return redirect(url_for('index'))
     form = ResetPasswordForm()
     if form.validate_on_submit():
@@ -124,7 +128,7 @@ def reset_password(token):
         db.session.commit()
         flash(_('Your password has been reset.'))
         return redirect(url_for('login'))
-    return render_template('reset_password.html', form=form)
+    return render_template('reset_password.html.j2', form=form)
 
 
 @app.route('/user/<username>')
@@ -132,13 +136,13 @@ def reset_password(token):
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
     page = request.args.get('page', 1, type=int)
-    posts = user.posts.order_by(Post.timestamp.desc()).paginate(
-        page, app.config['POSTS_PER_PAGE'], False)
-    next_url = url_for('user', username=user.username, page=posts.next_num) \
-        if posts.has_next else None
-    prev_url = url_for('user', username=user.username, page=posts.prev_num) \
-        if posts.has_prev else None
-    return render_template('user.html', user=user, posts=posts.items,
+    posts = user.followed_posts().paginate(
+        page=page, per_page=app.config["POSTS_PER_PAGE"], error_out=False)
+    next_url = url_for(
+        'index', page=posts.next_num) if posts.next_num else None
+    prev_url = url_for(
+        'index', page=posts.prev_num) if posts.prev_num else None
+    return render_template('user.html.j2', user=user, posts=posts.items,
                            next_url=next_url, prev_url=prev_url)
 
 
@@ -155,7 +159,7 @@ def edit_profile():
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.about_me.data = current_user.about_me
-    return render_template('edit_profile.html', title=_('Edit Profile'),
+    return render_template('edit_profile.html.j2', title=_('Edit Profile'),
                            form=form)
 
 
@@ -189,3 +193,8 @@ def unfollow(username):
     db.session.commit()
     flash(_('You are not following %(username)s.', username=username))
     return redirect(url_for('user', username=username))
+
+@app.route('/news/<int:news_id>')
+def news_detail(news_id):
+    news_item = News.query.get_or_404(news_id)
+    return render_template('news_detail.html.j2', news_item=news_item)

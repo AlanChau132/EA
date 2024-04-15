@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Post
+from app.models import User, Post, News, Picture
 
 
 app_context = app.app_context()
@@ -20,5 +20,19 @@ p1 = Post(body='my first post!', author=u1)
 p2 = Post(body='my first post!', author=u2)
 db.session.add(p1)
 db.session.add(p2)
+
+news1 = News(title='News 1', content='This is news 1')
+news2 = News(title='News 2', content='This is news 2')
+db.session.add(news1)
+db.session.add(news2)
+
+# create some pictures
+picture1 = Picture(filename='picture1.jpg', description='This is picture 1')
+picture2 = Picture(filename='picture2.jpg', description='This is picture 2')
+db.session.add(picture1)
+db.session.add(picture2)
+
+# commit the changes
+db.session.commit()
 
 db.session.commit()
