@@ -95,6 +95,7 @@ class Picture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(128), nullable=False)
     description = db.Column(db.String(256), nullable=True)
+
     #news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
 
     #def __repr__(self):
