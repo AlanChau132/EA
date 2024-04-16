@@ -2,7 +2,7 @@
 {% block app_content %}
 <h1>{{ news_item.title }}</h1>
 <p>{{ news_item.content }}</p>
-{% for picture in news_item.pictures %}
+{% for picture in pictures %}
 <img src="{{ url_for('static', filename=picture.filename) }}" alt="{{ picture.description }}">
 {% endfor %}
 {% endblock %}

@@ -197,4 +197,5 @@ def unfollow(username):
 @app.route('/news/<int:news_id>')
 def news_detail(news_id):
     news_item = News.query.get_or_404(news_id)
-    return render_template('news_detail.html.j2', news_item=news_item)
+    pictures = news_item.pictures.all()  
+    return render_template('news_detail.html.j2', news_item=news_item, pictures=pictures)

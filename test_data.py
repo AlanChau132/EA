@@ -21,18 +21,19 @@ p2 = Post(body='my first post!', author=u2)
 db.session.add(p1)
 db.session.add(p2)
 
+# create some news
 news1 = News(title='News 1', content='This is news 1')
 news2 = News(title='News 2', content='This is news 2')
 db.session.add(news1)
 db.session.add(news2)
+db.session.commit()  # Make sure to commit the changes so the news items get an ID
 
 # create some pictures
-picture1 = Picture(filename='picture1.jpg', description='This is picture 1')
-picture2 = Picture(filename='picture2.jpg', description='This is picture 2')
+picture1 = Picture(filename='picture1.jpg', description='This is picture 1', news_id=news1.id)
+picture2 = Picture(filename='picture2.jpg', description='This is picture 2', news_id=news2.id)
 db.session.add(picture1)
 db.session.add(picture2)
 
 # commit the changes
 db.session.commit()
 
-db.session.commit()

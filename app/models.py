@@ -16,6 +16,7 @@ followers = db.Table(
 )
 
 
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
@@ -95,14 +96,10 @@ class Picture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(128), nullable=False)
     description = db.Column(db.String(256), nullable=True)
-
-    #news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
-
-    #def __repr__(self):
-        #return f'<Picture {self.filename}>'
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
 
 class News(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.String(1024), nullable=True)
-    picture_id = db.Column(db.Integer, db.ForeignKey('picture.id'))
+    pictures = db.relationship('Picture', backref='news', lazy='dynamic')  
