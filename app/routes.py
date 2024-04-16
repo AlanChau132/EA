@@ -174,14 +174,6 @@ def follow(username):
     flash(_('You are following %(username)s!', username=username))
     return redirect(url_for('user', username=username))
 
-@app.route('/search', methods=['POST'])
-def search():
-    query = request.form['query']
-
-    search_results = ['Result 1', 'Result 2', 'Result 3']
-    
-    return render_template('results.html', query=query, results=search_results)
-
 
 @app.route('/unfollow/<username>')
 @login_required
