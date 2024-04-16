@@ -10,12 +10,12 @@
 {% for post in posts %}
 {% include '_post.html.j2' %}
 {% endfor %}
-{% for news in news %}
-<h2><a href="{{ url_for('news_detail', news_id=news.id) }}">{{ news.title }}</a></h2>
-<p>{{ news.content }}</p>
-{% if news.picture_id %}
-<img src="{{ url_for('static', filename=news.picture_id.filename) }}">
-{% endif %}
+{% for news_item in news %}
+<h2><a href="{{ url_for('news_detail', news_id=news_item.id) }}">{{ news_item.title }}</a></h2>
+<p>{{ news_item.content }}</p>
+{% for picture in news_item.pictures %}
+<img src="{{ url_for('static', filename=picture.filename) }}" alt="{{ picture.description }}">
+{% endfor %}
 {% endfor %}
 
 <nav aria-label="...">
