@@ -95,16 +95,13 @@ class Picture(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(128), nullable=False)
     description = db.Column(db.String(256), nullable=True)
-    news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
+    #news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
 
-    def __repr__(self):
-        return f'<Picture {self.filename}>'
+    #def __repr__(self):
+        #return f'<Picture {self.filename}>'
 
 class News(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(128), nullable=False)
     content = db.Column(db.String(1024), nullable=True)
-    pictures = db.relationship('Picture', backref='news', lazy='dynamic') 
-
-    def __repr__(self):
-        return f'<News {self.title}>'
+    picture_id = db.Column(db.Integer, db.ForeignKey('picture.id'))
