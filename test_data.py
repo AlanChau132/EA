@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Post, News, Picture
+from app.models import User, Post, News, Picture, Comment
 
 
 app_context = app.app_context()
@@ -33,6 +33,13 @@ picture1 = Picture(filename='picture1.jpg', description='This is picture 1', new
 picture2 = Picture(filename='picture2.jpg', description='This is picture 2', news_id=news2.id)
 db.session.add(picture1)
 db.session.add(picture2)
+
+# create some comments
+comment1 = Comment(content='This is a comment for news 1', news_id=news1.id, author_id=u1.id)
+comment2 = Comment(content='This is a comment for news 2', news_id=news2.id, author_id=u2.id)
+db.session.add(comment1)
+db.session.add(comment2)
+
 
 # commit the changes
 db.session.commit()

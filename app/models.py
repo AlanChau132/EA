@@ -23,6 +23,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    comments = db.relationship('Comment', backref='comment_author', lazy='dynamic', cascade="all, delete-orphan")
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     followed = db.relationship(
@@ -92,14 +93,23 @@ class Post(db.Model):
     def __repr__(self) -> str:
         return f'<Post {self.body}>'
     
-class Picture(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    filename = db.Column(db.String(128), nullable=False)
-    description = db.Column(db.String(256), nullable=True)
-    news_id = db.Column(db.Integer, db.ForeignKey('news.id'))  
-
 class News(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(128), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    title = db.Column(db.String(128), nullable=False, index=True)
     content = db.Column(db.String(1024), nullable=True)
     pictures = db.relationship('Picture', backref='news', lazy='dynamic')  
+    comments = db.relationship('Comment', back_populates='news', cascade='all, delete-orphan')
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    content = db.Column(db.String(1024), nullable=False, index=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    author = db.relationship('User', back_populates='comments', overlaps="comment_author")
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'), index=True)
+    news = db.relationship('News', back_populates='comments')
+
+class Picture(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    filename = db.Column(db.String(128), nullable=False, index=True)
+    description = db.Column(db.String(256), nullable=True)
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'), index=True)

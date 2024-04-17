@@ -1,12 +1,12 @@
 from datetime import datetime
-from flask import render_template, flash, redirect, url_for, request, g
+from flask import render_template, flash, redirect, url_for, request, g ,abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
-    ResetPasswordRequestForm, ResetPasswordForm
-from app.models import User, Post ,News, Picture
+    ResetPasswordRequestForm, ResetPasswordForm, CommentForm
+from app.models import User, Post ,News, Picture, Comment
 from app.email import send_password_reset_email
 
 
@@ -194,8 +194,38 @@ def unfollow(username):
     flash(_('You are not following %(username)s.', username=username))
     return redirect(url_for('user', username=username))
 
-@app.route('/news/<int:news_id>')
+@app.route('/news/<int:news_id>', methods=['GET', 'POST'])
 def news_detail(news_id):
     news_item = News.query.get_or_404(news_id)
-    pictures = news_item.pictures.all()  
-    return render_template('news_detail.html.j2', news_item=news_item, pictures=pictures)
+    pictures = news_item.pictures.all() 
+    form = CommentForm()
+    if form.validate_on_submit():
+        current_user.comment(form.content.data, news_id)
+        db.session.commit()
+        flash('Your comment has been published.')
+    return render_template('news_detail.html.j2', title=('News Detail'), news_item=news_item, form=form , pictures=pictures)
+
+@app.route('/news/<int:news_id>/comment', methods=['POST'])
+def comment(news_id):
+    form = CommentForm()
+    if form.validate_on_submit():
+        new_comment = Comment(content=form.content.data, news_id=news_id , author_id=current_user.id)
+        db.session.add(new_comment)
+        db.session.commit()
+        flash('Your comment has been published.')
+        return redirect(url_for('news_detail', news_id=news_id))
+    
+@app.route('/edit_comment/<int:comment_id>', methods=['GET', 'POST'])
+def edit_comment(comment_id):
+    comment = Comment.query.get_or_404(comment_id)
+    if current_user != comment.author:
+        abort(403)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment.content = form.content.data
+        db.session.commit()
+        flash('Your comment has been updated.')
+        return redirect(url_for('news_detail', news_id=comment.news_id))
+    elif request.method == 'GET':
+        form.content.data = comment.content
+    return render_template('edit_comment.html.j2', title='Edit Comment', form=form)
