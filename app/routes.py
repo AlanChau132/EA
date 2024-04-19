@@ -6,7 +6,7 @@ from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
     ResetPasswordRequestForm, ResetPasswordForm, CommentForm
-from app.models import User, Post ,News, Picture, Comment
+from app.models import User, Post ,News, Picture, Comment, Category
 from app.email import send_password_reset_email
 
 
@@ -195,6 +195,7 @@ def unfollow(username):
     return redirect(url_for('user', username=username))
 
 @app.route('/news/<int:news_id>', methods=['GET', 'POST'])
+@login_required
 def news_detail(news_id):
     news_item = News.query.get_or_404(news_id)
     pictures = news_item.pictures.all() 
@@ -206,6 +207,7 @@ def news_detail(news_id):
     return render_template('news_detail.html.j2', title=('News Detail'), news_item=news_item, form=form , pictures=pictures)
 
 @app.route('/news/<int:news_id>/comment', methods=['POST'])
+@login_required
 def comment(news_id):
     form = CommentForm()
     if form.validate_on_submit():
@@ -216,6 +218,7 @@ def comment(news_id):
         return redirect(url_for('news_detail', news_id=news_id))
     
 @app.route('/edit_comment/<int:comment_id>', methods=['GET', 'POST'])
+@login_required
 def edit_comment(comment_id):
     comment = Comment.query.get_or_404(comment_id)
     if current_user != comment.author:
@@ -229,3 +232,10 @@ def edit_comment(comment_id):
     elif request.method == 'GET':
         form.content.data = comment.content
     return render_template('edit_comment.html.j2', title='Edit Comment', form=form)
+
+@app.route('/category/<int:category_id>', methods=['GET'])
+@login_required
+def category(category_id):
+    category = Category.query.get_or_404(category_id)
+    news = News.query.filter_by(category=category).all()
+    return render_template('category.html.j2', news=news, category=category)

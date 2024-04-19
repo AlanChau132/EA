@@ -99,6 +99,7 @@ class News(db.Model):
     content = db.Column(db.String(1024), nullable=True)
     pictures = db.relationship('Picture', backref='news', lazy='dynamic')  
     comments = db.relationship('Comment', back_populates='news', cascade='all, delete-orphan')
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -113,3 +114,8 @@ class Picture(db.Model):
     filename = db.Column(db.String(128), nullable=False, index=True)
     description = db.Column(db.String(256), nullable=True)
     news_id = db.Column(db.Integer, db.ForeignKey('news.id'), index=True)
+
+class Category(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    name = db.Column(db.String(128), nullable=False, unique=True)
+    news = db.relationship('News', backref='category', lazy='dynamic')

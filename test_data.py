@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Post, News, Picture, Comment
+from app.models import User, Post, News, Picture, Comment, Category
 
 
 app_context = app.app_context()
@@ -21,11 +21,21 @@ p2 = Post(body='my first post!', author=u2)
 db.session.add(p1)
 db.session.add(p2)
 
+# create some categories
+category1 = Category(name='Sports')
+category2 = Category(name='Technology')
+category3 = Category(name='Entertainment')
+db.session.add(category1)
+db.session.add(category2)
+db.session.add(category3)
+
 # create some news
 news1 = News(title='News 1', content='This is news 1')
 news2 = News(title='News 2', content='This is news 2')
 db.session.add(news1)
 db.session.add(news2)
+news1.category = category1
+news2.category = category2
 db.session.commit()  # Make sure to commit the changes so the news items get an ID
 
 # create some pictures
