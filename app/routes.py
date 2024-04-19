@@ -2,12 +2,14 @@ from datetime import datetime
 from flask import render_template, flash, redirect, url_for, request, g ,abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
+from werkzeug.utils import secure_filename
 from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
-    ResetPasswordRequestForm, ResetPasswordForm, CommentForm
+    ResetPasswordRequestForm, ResetPasswordForm, CommentForm, NewsForm
 from app.models import User, Post ,News, Picture, Comment, Category
 from app.email import send_password_reset_email
+import os
 
 
 
@@ -239,3 +241,125 @@ def category(category_id):
     category = Category.query.get_or_404(category_id)
     news = News.query.filter_by(category=category).all()
     return render_template('category.html.j2', news=news, category=category)
+
+@app.route('/add_news', methods=['GET', 'POST'])
+@login_required
+def add_news():
+    if not current_user.is_admin:
+        abort(403)
+    form = NewsForm()
+    if form.validate_on_submit():
+        news = News(title=form.title.data, content=form.content.data)
+        db.session.add(news)
+        db.session.commit()  
+        if 'picture' in request.files:
+            file = request.files['picture']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                picture = Picture(filename=filename, news_id=news.id)  # now news.id is available
+                db.session.add(picture)
+                db.session.commit()
+        flash('The news has been added.')
+        return redirect(url_for('index'))
+    return render_template('add_news.html.j2', form=form)
+
+@app.route('/remove_news/<int:news_id>', methods=['POST'])
+@login_required
+def remove_news(news_id):
+    if not current_user.is_admin:
+        abort(403)
+    news = News.query.get_or_404(news_id)
+    db.session.delete(news)
+    db.session.commit()
+    flash('The news has been removed.')
+    return redirect(url_for('index'))
+
+@app.route('/edit_news/<int:news_id>', methods=['GET', 'POST'])
+@login_required
+def edit_news(news_id):
+    if not current_user.is_admin:
+        abort(403)
+    news = News.query.get_or_404(news_id)
+    form = NewsForm(obj=news)
+    if form.validate_on_submit():
+        news.title = form.title.data
+        news.content = form.content.data
+        if 'picture' in request.files:
+            file = request.files['picture']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            if news.pictures:  
+                for picture in news.pictures:  
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], picture.filename))
+                    picture.filename = filename  
+            else:
+                picture = Picture(filename=filename, news_id=news.id)
+                db.session.add(picture)
+        db.session.commit()
+        flash('The news has been updated.')
+        return redirect(url_for('news_detail', news_id=news.id))
+    return render_template('edit_news.html.j2', form=form, news_item=news)
+
+
+def allowed_file(filename):
+        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+        return '.' in filename and \
+               filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload_picture', methods=['POST'])
+@login_required
+def upload_picture():
+
+    if not current_user.is_admin:
+        abort(403)
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        picture = Picture(filename=filename)
+        db.session.add(picture)
+        db.session.commit()
+        flash('The picture has been uploaded.')
+        return redirect(url_for('index'))
+
+@app.route('/delete_picture/<int:picture_id>', methods=['POST'])
+@login_required
+def delete_picture(picture_id):
+    if not current_user.is_admin:
+        abort(403)
+    picture = Picture.query.get_or_404(picture_id)
+    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], picture.filename))
+    db.session.delete(picture)
+    db.session.commit()
+    flash('The picture has been deleted.')
+    return redirect(url_for('index'))
+
+@app.route('/change_picture/<int:picture_id>', methods=['POST'])
+@login_required
+def change_picture(picture_id):
+    if not current_user.is_admin:
+        abort(403)
+    picture = Picture.query.get_or_404(picture_id)
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+    file = request.files['file']
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+    if file and allowed_file(file.filename):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], picture.filename))  
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        picture.filename = filename  
+        db.session.commit()
+        flash('The picture has been changed.')
+        return redirect(url_for('index'))

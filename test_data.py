@@ -16,6 +16,10 @@ db.session.add(u2)
 u1.follow(u2)
 u2.follow(u1)
 
+u3 = User(username='root', email='joen@example.com', is_admin=True)
+u3.set_password("root")
+db.session.add(u3)
+
 p1 = Post(body='my first post!', author=u1)
 p2 = Post(body='my first post!', author=u2)
 db.session.add(p1)
@@ -43,7 +47,8 @@ picture1 = Picture(filename='picture1.jpg', description='This is picture 1', new
 picture2 = Picture(filename='picture2.jpg', description='This is picture 2', news_id=news2.id)
 db.session.add(picture1)
 db.session.add(picture2)
-
+news1.pictures = [picture1]
+news2.pictures = [picture2]
 # create some comments
 comment1 = Comment(content='This is a comment for news 1', news_id=news1.id, author_id=u1.id)
 comment2 = Comment(content='This is a comment for news 2', news_id=news2.id, author_id=u2.id)

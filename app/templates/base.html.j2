@@ -42,6 +42,11 @@
                     <a href="{{ url_for('logout') }}">{{ _('Logout') }}</a>
                 </li>
                 {% endif %}
+                {% if current_user.is_admin %}
+                <li>
+                    <a href="{{ url_for('add_news') }}">Add News</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>

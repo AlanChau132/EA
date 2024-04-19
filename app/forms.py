@@ -1,8 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, \
+from wtforms import StringField, PasswordField, BooleanField, SubmitField,  \
     TextAreaField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, \
     Length
+from flask_wtf.file import FileField, FileAllowed, FileRequired
 from flask_babel import _, lazy_gettext as _l
 from app.models import User
 
@@ -67,6 +68,13 @@ class EditProfileForm(FlaskForm):
 class PostForm(FlaskForm):
     post = TextAreaField(_l('Say something'), validators=[DataRequired()])
     submit = SubmitField(_l('Submit'))
+
 class CommentForm(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+class NewsForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    content = TextAreaField('Content', validators=[DataRequired()])
+    picture = FileField('Picture', validators=[FileAllowed(['jpg', 'png']), FileRequired()])
     submit = SubmitField('Submit')
