@@ -46,6 +46,21 @@ def index():
                            posts=posts.items, next_url=next_url,
                            prev_url=prev_url,news=news, pictures=pictures, picture_paths=picture_paths)
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    user_search = request.form.get('user_search')
+
+    if user_search == News.title:  # Replace 'News.title' with the appropriate variable or value you want to compare with
+        flash(_('You will see the results of your search!'))
+        return redirect(url_for('index'))
+    else:
+        flash(_('Your search did not match any results.'))
+        return redirect(url_for('index'))
+
+if __name__ == '__main__':
+    app.run()
+    
+
 
 @app.route('/explore')
 @login_required

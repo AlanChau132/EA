@@ -1,0 +1,14 @@
+{% extends "base.html.j2" %}
+{% block content %}
+<div class="search">
+<form action="" method=post>
+    <input type=text name=search value="{{ request.form.search}}"></br>
+    <div class="actions"><input type=submit value="Search"></div>
+</form>
+</div>
+{% for message in get_flashed_messages() %}
+<div class=flash>
+    {{ message }}
+</div>
+{% endfor %}
+{% endblock %}
