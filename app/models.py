@@ -7,6 +7,7 @@ import jwt
 from flask_login import UserMixin
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import Table
 
 
 followers = db.Table(
@@ -25,6 +26,7 @@ class User(UserMixin, db.Model):
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='comment_author', lazy='dynamic', cascade="all, delete-orphan")
     is_admin = db.Column(db.Boolean, default=False)
+    author = db.relationship('Author', backref='user', uselist=False)
     about_me = db.Column(db.String(140))
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     followed = db.relationship(
@@ -101,8 +103,9 @@ class News(db.Model):
     pictures = db.relationship('Picture', backref='news', lazy='dynamic')  
     comments = db.relationship('Comment', back_populates='news', cascade='all, delete-orphan')
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    category = db.relationship('Category', backref='news_items')
-
+    category = db.relationship('Category', backref='news_items', overlaps="category,news_items")
+    author_id = db.Column(db.Integer, db.ForeignKey('author.id'))
+    author = db.relationship('Author', backref='news_items')
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     content = db.Column(db.String(1024), nullable=False, index=True)
@@ -119,5 +122,41 @@ class Picture(db.Model):
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
+
     name = db.Column(db.String(128), nullable=False, unique=True)
-    news = db.relationship('News', backref='category_items', lazy='dynamic')
+    news = db.relationship('News', backref='category_items', overlaps="category,news_items")
+
+class Author(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    name = db.Column(db.String(128), nullable=False, index=True)
+    bio = db.Column(db.String(1024), nullable=True)
+    news = db.relationship('News', backref='news_items', lazy='dynamic')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
+
+    
+
+news_tags = Table('news_tags', db.Model.metadata,
+                  db.Column('news_id', db.Integer, db.ForeignKey('news.id')),
+                  db.Column('tag_id', db.Integer, db.ForeignKey('tag.id')))
+
+
+class Tag(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    name = db.Column(db.String(128), nullable=False, index=True)
+    news = db.relationship('News', secondary=news_tags, backref=db.backref('tags', lazy='dynamic'))
+
+class Advertisement(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    title = db.Column(db.String(128), nullable=False, index=True)
+    content = db.Column(db.String(1024), nullable=True)
+    image_url = db.Column(db.String(256), nullable=True)
+
+class Subscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+
+class SavedNews(db.Model):
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    news_id = db.Column(db.Integer, db.ForeignKey('news.id'))

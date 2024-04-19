@@ -42,7 +42,7 @@
                     <a href="{{ url_for('logout') }}">{{ _('Logout') }}</a>
                 </li>
                 {% endif %}
-                {% if current_user.is_admin %}
+                {% if current_user.is_admin or current_user.author%}
                 <li>
                     <a href="{{ url_for('add_news') }}">Add News</a>
                 </li>

@@ -7,7 +7,7 @@ from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
     ResetPasswordRequestForm, ResetPasswordForm, CommentForm, NewsForm
-from app.models import User, Post ,News, Picture, Comment, Category
+from app.models import User, Post ,News, Picture, Comment, Category, Author
 from app.email import send_password_reset_email
 import os
 
@@ -242,16 +242,17 @@ def category(category_id):
     news = News.query.filter_by(category=category).all()
     return render_template('category.html.j2', news=news, category=category)
 
-@app.route('/add_news', methods=['GET', 'POST','DELETE'])
+@app.route('/add_news', methods=['GET', 'POST'])
 @login_required
 def add_news():
-    if not current_user.is_admin:
+    if not (current_user.is_admin or current_user.author):
         abort(403)
     form = NewsForm()
     categories = Category.query.all()
+    author_id = current_user.author.id  
     form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
-        news = News(title=form.title.data, content=form.content.data, category_id=int(form.category.data))
+        news = News(title=form.title.data, content=form.content.data, category_id=int(form.category.data), author_id=author_id)  
         db.session.add(news)
         db.session.commit()  
         if 'picture' in request.files:
@@ -259,7 +260,7 @@ def add_news():
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                picture = Picture(filename=filename, news_id=news.id)  # now news.id is available
+                picture = Picture(filename=filename, news_id=news.id) 
                 db.session.add(picture)
                 db.session.commit()
         flash('The news has been added.')
@@ -269,7 +270,8 @@ def add_news():
 @app.route('/remove_news/<int:news_id>', methods=['POST'])
 @login_required
 def remove_news(news_id):
-    if not current_user.is_admin:
+    news = News.query.get_or_404(news_id)
+    if not (current_user.is_admin or current_user.id == news.author.user_id):
         abort(403)
     news = News.query.get_or_404(news_id)
     db.session.delete(news)
@@ -280,7 +282,8 @@ def remove_news(news_id):
 @app.route('/edit_news/<int:news_id>', methods=['GET', 'POST'])
 @login_required
 def edit_news(news_id):
-    if not current_user.is_admin:
+    news = News.query.get_or_404(news_id)
+    if not (current_user.is_admin or current_user.id == news.author.user_id):
         abort(403)
     news = News.query.get_or_404(news_id)
     form = NewsForm()
