@@ -7,4 +7,13 @@
         {{ wtf.quick_form(form) }}
     </div>
 </div>
+<style>
+    .btn-custom-red {
+        background-color: #f85b5b;  
+        color: white;  
+    }
+</style>
+<form method="post" action="{{ url_for('remove_news', news_id=news_item.id) }}">
+    <input type="submit" value="Delete News" class="btn btn-custom-red">
+</form>
 {% endblock %}

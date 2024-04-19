@@ -101,6 +101,7 @@ class News(db.Model):
     pictures = db.relationship('Picture', backref='news', lazy='dynamic')  
     comments = db.relationship('Comment', back_populates='news', cascade='all, delete-orphan')
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    category = db.relationship('Category', backref='news_items')
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
@@ -119,4 +120,4 @@ class Picture(db.Model):
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True, index=True)
     name = db.Column(db.String(128), nullable=False, unique=True)
-    news = db.relationship('News', backref='category', lazy='dynamic')
+    news = db.relationship('News', backref='category_items', lazy='dynamic')

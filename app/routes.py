@@ -242,14 +242,16 @@ def category(category_id):
     news = News.query.filter_by(category=category).all()
     return render_template('category.html.j2', news=news, category=category)
 
-@app.route('/add_news', methods=['GET', 'POST'])
+@app.route('/add_news', methods=['GET', 'POST','DELETE'])
 @login_required
 def add_news():
     if not current_user.is_admin:
         abort(403)
     form = NewsForm()
+    categories = Category.query.all()
+    form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
-        news = News(title=form.title.data, content=form.content.data)
+        news = News(title=form.title.data, content=form.content.data, category_id=int(form.category.data))
         db.session.add(news)
         db.session.commit()  
         if 'picture' in request.files:
@@ -281,10 +283,13 @@ def edit_news(news_id):
     if not current_user.is_admin:
         abort(403)
     news = News.query.get_or_404(news_id)
-    form = NewsForm(obj=news)
+    form = NewsForm()
+    categories = Category.query.all()
+    form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
         news.title = form.title.data
         news.content = form.content.data
+        news.category_id = int(form.category.data) 
         if 'picture' in request.files:
             file = request.files['picture']
         if file and allowed_file(file.filename):
