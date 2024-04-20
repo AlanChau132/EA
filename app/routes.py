@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import render_template, flash, redirect, url_for, request, g ,abort
+from flask import render_template, flash, redirect, session, url_for, request, g ,abort
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.urls import url_parse
 from werkzeug.utils import secure_filename
@@ -218,6 +218,7 @@ def comment(news_id):
         db.session.add(new_comment)
         db.session.commit()
         flash('Your comment has been published.')
+        session['last_comment_content'] = form.content.data
         return redirect(url_for('news_detail', news_id=news_id))
     
 @app.route('/edit_comment/<int:comment_id>', methods=['GET', 'POST'])
