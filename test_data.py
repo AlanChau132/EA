@@ -1,5 +1,5 @@
 from app import db, app
-from app.models import User, Post, News, Picture, Comment, Category ,Author
+from app.models import User, Post, News, Picture, Comment, Category ,Author ,Tag
 
 
 app_context = app.app_context()
@@ -59,6 +59,16 @@ author1 = Author(name='Author 1', bio='This is author 1')
 u4 = User(username='a', email='john2@example.com', author=author1)
 u4.set_password("a")
 db.session.add(u4)
+
+# create some tags
+tag1 = Tag(name='Tag 1')
+tag2 = Tag(name='Tag 2')
+db.session.add(tag1)
+db.session.add(tag2)
+
+# assign tags to news
+news1.tags.append(tag1)
+news2.tags.append(tag2)
 
 
 

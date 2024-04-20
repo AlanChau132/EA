@@ -78,5 +78,6 @@ class NewsForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     content = TextAreaField('Content', validators=[DataRequired()])
     picture = FileField('Picture', validators=[FileAllowed(['jpg', 'png']), FileRequired()])
-    category = SelectField('Category', choices=[]) 
+    category = SelectField('Category', choices=[])
+    tags = StringField('Tags', validators=[DataRequired()])
     submit = SubmitField('Submit')

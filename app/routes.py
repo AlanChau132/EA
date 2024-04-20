@@ -7,7 +7,7 @@ from flask_babel import _, get_locale
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, \
     ResetPasswordRequestForm, ResetPasswordForm, CommentForm, NewsForm
-from app.models import User, Post ,News, Picture, Comment, Category, Author
+from app.models import User, Post ,News, Picture, Comment, Category, Author ,Tag
 from app.email import send_password_reset_email
 import os
 
@@ -200,13 +200,14 @@ def unfollow(username):
 @login_required
 def news_detail(news_id):
     news_item = News.query.get_or_404(news_id)
-    pictures = news_item.pictures.all() 
+    pictures = news_item.pictures.all()
+    tag = Tag.query.get(news_id)
     form = CommentForm()
     if form.validate_on_submit():
         current_user.comment(form.content.data, news_id)
         db.session.commit()
         flash('Your comment has been published.')
-    return render_template('news_detail.html.j2', title=('News Detail'), news_item=news_item, form=form , pictures=pictures)
+    return render_template('news_detail.html.j2', title=('News Detail'), news_item=news_item, form=form , pictures=pictures, tag=tag)
 
 @app.route('/news/<int:news_id>/comment', methods=['POST'])
 @login_required
@@ -249,12 +250,21 @@ def add_news():
         abort(403)
     form = NewsForm()
     categories = Category.query.all()
-    author_id = current_user.author.id  
+    author_id = current_user.author.id if current_user.author else None
     form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
-        news = News(title=form.title.data, content=form.content.data, category_id=int(form.category.data), author_id=author_id)  
+        news = News(title=form.title.data, content=form.content.data, category_id=int(form.category.data), author_id=author_id)
         db.session.add(news)
-        db.session.commit()  
+        db.session.commit()
+        tags = form.tags.data.split(',')
+        for tag in news.tags.all():
+            news.tags.remove(tag) 
+        for tag_name in tags:
+            tag = Tag.query.filter_by(name=tag_name).first()
+            if tag is None:  
+                tag = Tag(name=tag_name)
+                db.session.add(tag)
+            news.tags.append(tag)   
         if 'picture' in request.files:
             file = request.files['picture']
             if file and allowed_file(file.filename):
@@ -285,14 +295,23 @@ def edit_news(news_id):
     news = News.query.get_or_404(news_id)
     if not (current_user.is_admin or current_user.id == news.author.user_id):
         abort(403)
-    news = News.query.get_or_404(news_id)
     form = NewsForm()
     categories = Category.query.all()
+    tag = Tag.query.all()
     form.category.choices = [(c.id, c.name) for c in categories]
     if form.validate_on_submit():
         news.title = form.title.data
         news.content = form.content.data
-        news.category_id = int(form.category.data) 
+        news.category_id = int(form.category.data)
+        for tag in news.tags.all():
+            news.tags.remove(tag)
+        new_tags = form.tags.data.split(',')
+        for tag_name in new_tags:
+            tag = Tag.query.filter_by(name=tag_name).first()
+            if tag is None:  
+                tag = Tag(name=tag_name)
+                db.session.add(tag)
+            news.tags.append(tag)
         if 'picture' in request.files:
             file = request.files['picture']
         if file and allowed_file(file.filename):
@@ -309,7 +328,6 @@ def edit_news(news_id):
         flash('The news has been updated.')
         return redirect(url_for('news_detail', news_id=news.id))
     return render_template('edit_news.html.j2', form=form, news_item=news)
-
 
 def allowed_file(filename):
         ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
