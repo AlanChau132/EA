@@ -19,6 +19,9 @@
 </form>
 {% for comment in news_item.comments %}
 <p>{{ comment.content }}</p>
+<a href="{{ url_for('user', username=comment.author.username) }}">
+    <img src="{{comment.author.avatar(50) }}" />
+</a>
 {% if current_user == comment.author %}
     <a href="/edit_comment/{{ comment.id }}" class="btn btn-default">Edit</a>
 {% endif %}
