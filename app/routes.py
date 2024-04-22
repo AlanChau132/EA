@@ -46,6 +46,16 @@ def index():
                            posts=posts.items, next_url=next_url,
                            prev_url=prev_url,news=news, pictures=pictures, picture_paths=picture_paths)
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    query = request.args.get('query') 
+    if query:
+        filtered_news = News.query.filter(News.title.contains(query)).all()
+        if filtered_news:
+            return render_template('search.html.j2', news=filtered_news)
+        else:
+            flash('No news matches your search.')
+    return redirect(url_for('index'))
 
 @app.route('/explore')
 @login_required
