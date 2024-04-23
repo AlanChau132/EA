@@ -57,4 +57,11 @@ def get_locale():
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
+
 from app import routes, models, errors
+from app.models import Category
+
+@app.context_processor
+def inject_categories():
+    categories = Category.query.all()
+    return dict(categories=categories)

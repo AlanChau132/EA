@@ -20,11 +20,11 @@ msgstr ""
 
 #: app/__init__.py:20
 msgid "Please log in to access this page."
-msgstr ""
+msgstr "請登入造訪此頁"
 
 #: app/email.py:22
-msgid "[Microblog] Reset Your Password"
-msgstr ""
+msgid "Reset Your Password"
+msgstr "重置密碼"
 
 #: app/forms.py:11 app/forms.py:18 app/forms.py:51
 msgid "Username"
@@ -40,7 +40,7 @@ msgstr ""
 
 #: app/forms.py:14 app/routes.py:74 app/templates/login.html:5
 msgid "Sign In"
-msgstr ""
+msgstr "登入"
 
 #: app/forms.py:19 app/forms.py:38
 msgid "Email"
@@ -52,31 +52,31 @@ msgstr ""
 
 #: app/forms.py:24 app/routes.py:95 app/templates/register.html:5
 msgid "Register"
-msgstr ""
+msgstr "註冊"
 
 #: app/forms.py:29 app/forms.py:64
 msgid "Please use a different username."
-msgstr ""
+msgstr "請使用不同的用戶名"
 
 #: app/forms.py:34
 msgid "Please use a different email address."
-msgstr ""
+msgstr "請使用不同的用戶電子郵件地址"
 
 #: app/forms.py:39 app/forms.py:47
 msgid "Request Password Reset"
-msgstr ""
+msgstr "請求重設密碼"
 
 #: app/forms.py:52
 msgid "About me"
-msgstr ""
+msgstr "關於我"
 
 #: app/forms.py:54 app/forms.py:69
 msgid "Submit"
-msgstr ""
+msgstr "提交"
 
 #: app/forms.py:68
 msgid "Say something"
-msgstr ""
+msgstr "說些甚麼"
 
 #: app/routes.py:30
 msgid "Your post is now live!"

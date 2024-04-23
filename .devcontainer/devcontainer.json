@@ -2,11 +2,12 @@
     "name": "Python 3 & PostgreSQL",
     "dockerComposeFile": "docker-compose.yml",
     "service": "app", 
+    
     "hostRequirements": {
       "cpus": 2
     },
     "waitFor": "onCreateCommand",
-    "postCreateCommand": "",
+    "postCreateCommand": "python test_data.py",
     "postAttachCommand": {
       "server": "flask --debug run --host=0.0.0.0"
     },
