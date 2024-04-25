@@ -310,6 +310,7 @@ def edit_news(news_id):
     categories = Category.query.all()
     tag = Tag.query.all()
     form.category.choices = [(c.id, c.name) for c in categories]
+    picture = None  # Add this line to initialize 'picture'
     if form.validate_on_submit():
         news.title = form.title.data
         news.content = form.content.data
@@ -325,20 +326,18 @@ def edit_news(news_id):
             news.tags.append(tag)
         if 'picture' in request.files:
             file = request.files['picture']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            if news.pictures:  
-                for picture in news.pictures:  
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], picture.filename))
-                    picture.filename = filename  
-            else:
+            if file and allowed_file(file.filename):
+                old_picture = Picture.query.filter_by(news_id=news.id).first()
+                if old_picture:
+                    db.session.delete(old_picture)
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 picture = Picture(filename=filename, news_id=news.id)
                 db.session.add(picture)
-        db.session.commit()
-        flash('The news has been updated.')
-        return redirect(url_for('news_detail', news_id=news.id))
-    return render_template('edit_news.html.j2', form=form, news_item=news)
+                db.session.commit()
+                flash('The news has been updated.')
+                return redirect(url_for('news_detail', news_id=news.id, picture=picture))
+    return render_template('edit_news.html.j2', form=form, news_item=news, picture=picture)
 
 def allowed_file(filename):
         ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
