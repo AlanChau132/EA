@@ -1,8 +1,6 @@
 ARG VARIANT=3.16
-FROM mcr.microsoft
-
+FROM mcr.microsoft.com/vscode/devcontainers/python:3.16
 ENV PYTHONUNBUFFERED 1
-
 # Install Docker CLI
 RUN apt-get update && \
     apt-get install -y \
@@ -18,10 +16,8 @@ RUN apt-get update && \
     stable" && \
     apt-get update && \
     apt-get install -y docker-ce-cli
-
 # Copy requirements.txt to a temporary location
 COPY requirements.txt /tmp/pip-tmp/
-
 # Install dependencies with increased timeout and retry mechanism
 RUN for i in 1 2 3; do \
       pip3 --disable-pip-version-check --no-cache-dir install --default-timeout=1000 -r /tmp/pip-tmp/requirements.txt \
